@@ -3,7 +3,10 @@
 //VARS parametric
 const rectSize = 150; //dimensions of the rects
 const scaleW = 1680; //width for which was designed for
-var fuzzyRadius = 40; //spreading of the light
+var fuzzyRadius = 10; //spreading of the light
+var backgroundColor = "rgba(20, 20, 20, .3)";
+var shadowSideStripes = "rgbA(31, 31, 31,0.3)";
+var rectsColor = "black"
 
 //BOOLEANS
 var updateCanvas = true;
@@ -38,8 +41,6 @@ var rectPlaces = [
 	{x: 400, y: 1400},
 	{x: 700, y: 1900},
 ];
-
-console.log(segments);
 //relations
 window.requestAnimationFrame = window.requestAnimationFrame || window.webkitRequestAnimationFrame || window.mozRequestAnimationFrame || window.msRequestAnimationFrame;
 
@@ -218,43 +219,58 @@ function calcSegments(){
 function draw(){
 	// Clear canvas
 	ctx.clearRect(0,0,canvas.width,canvas.height);
-
 	// Sight Polygons
-	var polygons = [getSightPolygon(Mouse.x,Mouse.y)];
-	for(var angle=0;angle<Math.PI*2;angle+=(Math.PI*2)/10){
-		var dx = Math.cos(angle)*fuzzyRadius;
-		var dy = Math.sin(angle)*fuzzyRadius;
-		polygons.push(getSightPolygon((Mouse.x+dx) ,(Mouse.y+dy) ));
+	var polygons = [getSightPolygon(Mouse.x,Mouse.y+windowOffset)];
+	for(var angle=0;angle<Math.PI*2; angle+=(Math.PI*2)/10){
+		var dx = Math.sin(angle)*fuzzyRadius;
+		var dy = Math.cos(angle)*fuzzyRadius;
+		polygons.push(getSightPolygon((Mouse.x+dx) ,(Mouse.y+dy+windowOffset)));
 	};
-
+drawPolygon(polygons[0],ctx,backgroundColor);
 	// DRAW AS A GIANT POLYGON
 	for(var i=1;i<polygons.length;i++){
-		drawPolygon(polygons[i],ctx,"rgba(255,255,255,0.2)");
+		drawPolygon(polygons[i],ctx, shadowSideStripes);
 	}
-	drawPolygon(polygons[0],ctx,"#fff");
 
-	// Draw dots
-	ctx.fillStyle = "#dd3838";
-	ctx.beginPath();
-    ctx.arc(Mouse.x, Mouse.y, 2, 0, 2*Math.PI, false);
-    ctx.fill();
-	for(var angle=0;angle<Math.PI*2;angle+=(Math.PI*2)/10){
-		var dx = Math.cos(angle)*fuzzyRadius;
-		var dy = Math.sin(angle)*fuzzyRadius;
-		ctx.beginPath();
-    	ctx.arc(Mouse.x+dx, Mouse.y+dy, 2, 0, 2*Math.PI, false);
-    	ctx.fill();
-    }
 
+	// // Draw dots
+	// ctx.fillStyle = "#dd3838";
+	// ctx.beginPath();
+  //   ctx.arc(Mouse.x, Mouse.y, 2, 0, 2*Math.PI, false);
+  //   ctx.fill();
+	// for(var angle=0;angle<Math.PI*2;angle+=(Math.PI*2)/10){
+	// 	var dx = Math.cos(angle)*fuzzyRadius;
+	// 	var dy = Math.sin(angle)*fuzzyRadius;
+	// 	ctx.beginPath();
+  //   	ctx.arc(Mouse.x+dx, Mouse.y+dy, 2, 0, 2*Math.PI, false);
+  //   	ctx.fill();
+  //   }
+ctx.drawImage(lightSpot,Mouse.x-lightSpot.width/2,Mouse.y-lightSpot.height/2);
 	// Draw segments
-	ctx.strokeStyle = "#999";
-	ctx.fillStyle = "#dd3838"
-	for(var i=0;i<segments.length;i++){
-		var seg = segments[i];
+	// ctx.strokeStyle = "#999";
+
+	// for(var i=0;i<segments.length;i++){
+	// 	var seg = segments[i];
+	// 	if(i%4 === 0){
+	// 	ctx.beginPath();
+	// 	ctx.moveTo(seg.a.x ,seg.a.y -windowOffset);
+	// 	}
+	// 	ctx.lineTo(seg.a.x ,seg.a.y -windowOffset);
+	// 	if((i-1)%4 === 0 ){
+	// 		ctx.lineTo(seg.b.x ,seg.b.y -windowOffset);
+	// 		ctx.fill();
+	// 		console.log("hello");
+	// 	}
+	// }
+
+	for(var i=0;i<rectPlaces.length;i++){
+		ctx.fillStyle = rectsColor
+		var spot = rectPlaces[i];
 		ctx.beginPath();
-		ctx.moveTo(seg.a.x ,seg.a.y -windowOffset);
-		ctx.lineTo(seg.b.x ,seg.b.y -windowOffset);
-		ctx.stroke();
+		ctx.moveTo(spot.x ,spot.y -windowOffset);
+		ctx.lineTo(spot.x+rectSize,spot.y -windowOffset);
+		ctx.lineTo(spot.x+rectSize,spot.y + rectSize -windowOffset);
+		ctx.lineTo(spot.x,spot.y+rectSize -windowOffset);
 		ctx.fill();
 	}
 }
@@ -287,7 +303,10 @@ window.addEventListener('resize', resizeCanvas, false);
 
 //everything happening on pageload
 window.onload = function(){
-	drawLoop();
+	lightSpot.onload = function(){
+		drawLoop();
+	};
+	lightSpot.src = "assets/lightspot.png";
 };
 
 //everything happening when mouse is moved
