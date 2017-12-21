@@ -1,11 +1,11 @@
 //######################SETUP##########################
 
 //VARS parametric
-const rectSize = 150; //dimensions of the rects
+const rectSize = 300; //dimensions of the rects
 const scaleW = 1680; //width for which was designed for
-var fuzzyRadius = 10; //spreading of the light
-var backgroundColor = "rgba(20, 20, 20, .3)";
-var shadowSideStripes = "rgbA(31, 31, 31,0.3)";
+var fuzzyRadius = 5; //spreading of the light
+var backgroundColor = "rgba(10, 10, 10, 0.3)";
+var shadowSideStripes = "rgba(23, 23,23 ,0.3)";
 var rectsColor = "black"
 
 //BOOLEANS
@@ -18,7 +18,7 @@ var Mouse = {
 	y: 0
 };
 var scaleFactor = window.innerWidth/scaleW
-var lightSpot = new Image();
+var lightSpotImage = new Image();
 
 // LINKS
 var canvas = document.getElementById("canvas");
@@ -27,19 +27,24 @@ var ctx = canvas.getContext("2d");
 // ELEMENTS Scaled for 1680w
 var segments = [
 	// Border
-	{a:{x:0,y:0}, b:{x:5000,y:0}},
-	{a:{x:5000,y:0}, b:{x:5000,y:5000}},
-	{a:{x:5000,y:5000}, b:{x:0,y:5000}},
-	{a:{x:0,y:5000}, b:{x:0,y:0}},
+	{a:{x:0,y:0}, b:{x:5000,y:0-windowOffset}},
+	{a:{x:5000,y:0}, b:{x:5000,y:6000-windowOffset}},
+	{a:{x:5000,y:6000}, b:{x:0,y:6000}},
+	{a:{x:0,y:6000}, b:{x:0,y:0}},
 ];
 
+//x,y coordinates for the rects on the canvas
 var rectPlaces = [
-	{x: 600, y: 400},
-	{x: 300, y: 200},
-	{x: 1100, y: 1000},
-	{x: 100, y: 2000},
-	{x: 400, y: 1400},
-	{x: 700, y: 1900},
+	{x: 170, y: 500},
+	{x: 170, y: 2450},
+	{x: 170, y: 5230},
+	{x: 476, y: 1218},
+	{x: 476, y: 3222},
+	{x: 476, y: 4610},
+	{x: 1088, y: 213},
+	{x: 1088, y: 2736},
+	{x: 1394, y: 1296},
+	{x: 1394, y: 3444},
 ];
 //relations
 window.requestAnimationFrame = window.requestAnimationFrame || window.webkitRequestAnimationFrame || window.mozRequestAnimationFrame || window.msRequestAnimationFrame;
@@ -171,10 +176,39 @@ function calcShift(dot,x,y){
 	var point = {};
 	point.x = dot.x + x;
 	point.y = dot.y + y;
-	// console.log(point.x);
 	return point;
 }
 
+//calculates segments dots from x,y values of the rects
+function calcSegments(){
+	for(var i=0; i<rectPlaces.length; i++){
+		const dot = jQuery.extend(true, {}, rectPlaces[i]);
+		var line = {};
+
+
+		//line1
+		line.a = calcShift(dot,0,0);
+		line.b = calcShift(dot,0,rectSize);
+		segments.push(jQuery.extend(true, {}, line));
+
+		//line2
+		line.a = calcShift(dot,0,rectSize);
+		line.b = calcShift(dot,rectSize,rectSize);
+		segments.push(jQuery.extend(true, {}, line));
+
+		// //line3
+		line.a = calcShift(dot,rectSize,rectSize);
+		line.b = calcShift(dot,rectSize,0);
+		segments.push(jQuery.extend(true, {}, line));
+
+		// //line4
+		line.a = calcShift(dot,rectSize,0);
+		line.b = calcShift(dot,0,0);
+		segments.push(jQuery.extend(true, {}, line));
+	}
+}
+
+//draws a polygon that forms or leaves the shadows free
 function drawPolygon(polygon,ctx,fillStyle){
 	ctx.fillStyle = fillStyle;
 	ctx.beginPath();
@@ -186,82 +220,36 @@ function drawPolygon(polygon,ctx,fillStyle){
 	ctx.fill();
 }
 
-//calculates segments dots from x,y values of the rects
-function calcSegments(){
-	for(var i=0; i<rectPlaces.length; i++){
-	const dot = jQuery.extend(true, {}, rectPlaces[i]);
-  var line = {};
-
-
-	//line1
-	line.a = calcShift(dot,0,0);
-	line.b = calcShift(dot,0,rectSize);
-	segments.push(jQuery.extend(true, {}, line));
-
-	//line2
-	line.a = calcShift(dot,0,rectSize);
-	line.b = calcShift(dot,rectSize,rectSize);
-	segments.push(jQuery.extend(true, {}, line));
-
-	// //line3
-	line.a = calcShift(dot,rectSize,rectSize);
-	line.b = calcShift(dot,rectSize,0);
-	segments.push(jQuery.extend(true, {}, line));
-
-	// //line4
-	line.a = calcShift(dot,rectSize,0);
-	line.b = calcShift(dot,0,0);
-	segments.push(jQuery.extend(true, {}, line));
-}
-}
-
 //Everything visible in the canvas
 function draw(){
+
+	//define the point of the lightSpotImage
+	var spotLight = {};
+	spotLight.x = canvas.width/2;
+	spotLight.y = (windowOffset/$(document).height())*canvas.height*1.4 - 80
+	spotLight.x = Mouse.x
+	// spotLight.y = Mouse.y
+
 	// Clear canvas
 	ctx.clearRect(0,0,canvas.width,canvas.height);
 	// Sight Polygons
-	var polygons = [getSightPolygon(Mouse.x,Mouse.y+windowOffset)];
+	var polygons = [getSightPolygon(spotLight.x,spotLight.y+windowOffset)];
 	for(var angle=0;angle<Math.PI*2; angle+=(Math.PI*2)/10){
 		var dx = Math.sin(angle)*fuzzyRadius;
 		var dy = Math.cos(angle)*fuzzyRadius;
-		polygons.push(getSightPolygon((Mouse.x+dx) ,(Mouse.y+dy+windowOffset)));
+		polygons.push(getSightPolygon((spotLight.x+dx) ,(spotLight.y+dy+windowOffset)));
 	};
-drawPolygon(polygons[0],ctx,backgroundColor);
+
+	drawPolygon(polygons[0],ctx,backgroundColor);
+
 	// DRAW AS A GIANT POLYGON
 	for(var i=1;i<polygons.length;i++){
 		drawPolygon(polygons[i],ctx, shadowSideStripes);
 	}
 
+	drawShaft(spotLight.x, spotLight.y);
 
-	// // Draw dots
-	// ctx.fillStyle = "#dd3838";
-	// ctx.beginPath();
-  //   ctx.arc(Mouse.x, Mouse.y, 2, 0, 2*Math.PI, false);
-  //   ctx.fill();
-	// for(var angle=0;angle<Math.PI*2;angle+=(Math.PI*2)/10){
-	// 	var dx = Math.cos(angle)*fuzzyRadius;
-	// 	var dy = Math.sin(angle)*fuzzyRadius;
-	// 	ctx.beginPath();
-  //   	ctx.arc(Mouse.x+dx, Mouse.y+dy, 2, 0, 2*Math.PI, false);
-  //   	ctx.fill();
-  //   }
-ctx.drawImage(lightSpot,Mouse.x-lightSpot.width/2,Mouse.y-lightSpot.height/2);
-	// Draw segments
-	// ctx.strokeStyle = "#999";
-
-	// for(var i=0;i<segments.length;i++){
-	// 	var seg = segments[i];
-	// 	if(i%4 === 0){
-	// 	ctx.beginPath();
-	// 	ctx.moveTo(seg.a.x ,seg.a.y -windowOffset);
-	// 	}
-	// 	ctx.lineTo(seg.a.x ,seg.a.y -windowOffset);
-	// 	if((i-1)%4 === 0 ){
-	// 		ctx.lineTo(seg.b.x ,seg.b.y -windowOffset);
-	// 		ctx.fill();
-	// 		console.log("hello");
-	// 	}
-	// }
+	ctx.drawImage(lightSpotImage,spotLight.x-lightSpotImage.width/2,spotLight.y-lightSpotImage.height/2);
 
 	for(var i=0;i<rectPlaces.length;i++){
 		ctx.fillStyle = rectsColor
@@ -292,6 +280,23 @@ function resizeCanvas(){
 	canvas.height = window.innerHeight;
 }
 
+// //logarythmic function for sun movement
+// function moveSpotlight(x, radiusHeightRatio){
+// 	radius = radiusHeightRatio * $(document).height()
+// 	centerX = canvas.width/2//-radius/2
+// 	centerY = canvas.height/2
+// }
+
+function drawShaft(x,y){
+	ctx.strokeStyle = "white"
+	ctx.beginPath()
+	ctx.moveTo(x,0);
+	ctx.lineTo(x, y);
+	ctx.lineTo(x, 0);
+	ctx.stroke();
+}
+
+
 
 //######################EVENTS##########################
 
@@ -303,10 +308,10 @@ window.addEventListener('resize', resizeCanvas, false);
 
 //everything happening on pageload
 window.onload = function(){
-	lightSpot.onload = function(){
+	lightSpotImage.onload = function(){
 		drawLoop();
 	};
-	lightSpot.src = "assets/lightspot.png";
+	lightSpotImage.src = "assets/lightspot.png";
 };
 
 //everything happening when mouse is moved
@@ -318,6 +323,6 @@ canvas.onmousemove = function(event){
 
 //everything happening when scrolling
 window.addEventListener('scroll', function(e){
-	updateCanvas = true
-	windowOffset = window.pageYOffset
+	updateCanvas = true;
+	windowOffset = window.pageYOffset;
 })
